@@ -1,7 +1,3 @@
-Understood. Here’s a **professional GitHub `README.md`** version with badges, star icons, and a clean look — no emojis, no informal tone.
-
----
-
 # Paradox Launcher Remover
 
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue?style=for-the-badge\&logo=c%2B%2B)
