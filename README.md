@@ -1,4 +1,6 @@
-# Deparadox
+
+<img width="1150" height="226" alt="d645d09e-7043-4201-80ba-02ae8f8d7330 copy" src="https://github.com/user-attachments/assets/2754fa75-0c21-4df7-aa8c-7214caac058b" />
+
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue?style=for-the-badge\&logo=c%2B%2B)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=for-the-badge\&logo=windows)
 ![Stars](https://img.shields.io/github/stars/0bArc/Deparadox?style=for-the-badge\&color=gold)
