@@ -1,5 +1,4 @@
-# Paradox Launcher Remover
-
+# Deparadox
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue?style=for-the-badge\&logo=c%2B%2B)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=for-the-badge\&logo=windows)
 ![Stars](https://img.shields.io/github/stars/0bArc/Deparadox?style=for-the-badge\&color=gold)
@@ -9,7 +8,7 @@
 
 ### Overview
 
-Paradox Launcher Remover is a lightweight C++ utility that removes the malfunctioning Paradox Launcher files and restores direct game launching through Steam.
+Deparadox is a lightweight C++ utility that removes the malfunctioning Paradox Launcher files and restores direct game launching through Steam.
 It safely preserves **dowser.exe** and automatically creates a working `Launcher.bat` that launches the actual game executable using Steam’s launch argument system.
 
 ---
