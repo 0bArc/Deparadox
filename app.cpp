@@ -3,133 +3,109 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <regex>
 #include <algorithm>
 
-bool isIgnoredExe(const std::string& name) {
+bool isIgnored(const std::string& name) {
+    static const std::vector<std::string> ignored = {
+        "dowser.exe", "crashpad_handler.exe", "crashpad_handler32.exe",
+        "crashpad_handler64.exe", "bootstrapper-v2.exe",
+        "launcher-installer-windows_2024.10.exe", "paradox launcher.exe"
+    };
     std::string lower = name;
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    for (const auto& bad : ignored)
+        if (lower == bad || lower.find("launcher") != std::string::npos)
+            return true;
+    return false;
+}
 
-    std::vector<std::string> ignored = {
-        "dowser.exe",  // keep it, don't delete or use it
-        "crashpad_handler.exe",
-        "crashpad_handler32.exe",
-        "crashpad_handler64.exe",
-        "bootstrapper-v2.exe",
-        "launcher-installer-windows_2024.10.exe",
-        "paradox launcher.exe"
+bool matchesParadoxGame(const std::string& exe) {
+    static const std::vector<std::regex> paradoxGamePatterns = {
+        std::regex("cities|skylines", std::regex_constants::icase),
+        std::regex("ck[23]|crusader", std::regex_constants::icase),
+        std::regex("eu[34]|europa", std::regex_constants::icase),
+        std::regex("hoi[34]|hearts of iron", std::regex_constants::icase),
+        std::regex("stellaris", std::regex_constants::icase),
+        std::regex("victoria", std::regex_constants::icase),
+        std::regex("imperator|rome", std::regex_constants::icase),
+        std::regex("ageofwonders|aow", std::regex_constants::icase),
+        std::regex("prisonarchitect|prison architect", std::regex_constants::icase),
+        std::regex("survivingmars|surviving mars", std::regex_constants::icase),
+        std::regex("tyranny", std::regex_constants::icase),
+        std::regex("empireofsin|empire of sin", std::regex_constants::icase),
     };
-
-    for (const auto& bad : ignored) {
-        if (lower == bad)
+    for (const auto& pattern : paradoxGamePatterns) {
+        if (std::regex_search(exe, pattern))
             return true;
     }
-
-    // skip anything with "launcher" in name
-    if (lower.find("launcher") != std::string::npos)
-        return true;
-
     return false;
 }
 
 int main() {
-    std::cout << "=== Paradox Launcher Remover v4 ===\n";
-    std::cout << "Cleans Paradox junk, keeps dowser.exe safe.\n\n";
-
-    std::string folderPath;
-    std::cout << "What folder? ";
-    std::getline(std::cin, folderPath);
-
-    std::filesystem::path targetDir(folderPath);
-
-    if (!std::filesystem::exists(targetDir) || !std::filesystem::is_directory(targetDir)) {
-        std::cerr << "Error: specified path is invalid or not a directory.\n";
+    std::cout << "Paradox Launcher Bypass\nFolder? ";
+    std::string folder;
+    std::getline(std::cin, folder);
+    std::filesystem::path dir(folder);
+    if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
+        std::cerr << "Invalid directory\n";
         return 1;
     }
 
-    std::cout << "\nScanning: " << targetDir << "\n";
-
-    // 1. Remove known Paradox junk files (excluding dowser.exe)
-    std::vector<std::string> BAD_FILES {
+    const std::vector<std::string> junkFiles = {
         "launcher-settings.json",
         "launcher-installer-windows_2024.10.exe",
         "bootstrapper-v2.exe",
         "Paradox Launcher.exe"
     };
-
-    for (const auto& file : BAD_FILES) {
-        std::filesystem::path badFile = targetDir / file;
-        if (std::filesystem::exists(badFile)) {
-            try {
-                std::filesystem::remove(badFile);
-                std::cout << "[Removed file] " << badFile.filename().string() << '\n';
-            } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "[Error removing] " << badFile << ": " << e.what() << '\n';
-            }
-        }
+    for (const auto& file : junkFiles) {
+        try {
+            std::filesystem::remove(dir / file);
+        } catch (...) {}
     }
 
-    // 2. Remove launcher folder only if it doesn’t contain dowser.exe
-    std::filesystem::path launcherFolder = targetDir / "launcher";
-    if (std::filesystem::exists(launcherFolder) && std::filesystem::is_directory(launcherFolder)) {
-        bool safeToDelete = true;
-
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(launcherFolder)) {
-            if (entry.path().filename() == "dowser.exe") {
-                safeToDelete = false;
+    auto launcherDir = dir / "launcher";
+    if (std::filesystem::exists(launcherDir) && std::filesystem::is_directory(launcherDir)) {
+        bool keep = false;
+        for (const auto& e : std::filesystem::recursive_directory_iterator(launcherDir)) {
+            if (e.path().filename() == "dowser.exe") {
+                keep = true;
                 break;
             }
         }
-
-        if (safeToDelete) {
+        if (!keep) {
             try {
-                std::uintmax_t removed = std::filesystem::remove_all(launcherFolder);
-                std::cout << "[Removed folder] launcher (" << removed << " items deleted)\n";
-            } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "[Error removing folder] " << e.what() << '\n';
-            }
-        } else {
-            std::cout << "[Skipped] launcher folder contains dowser.exe (kept intact)\n";
+                std::filesystem::remove_all(launcherDir);
+            } catch (...) {}
         }
     }
 
-    // 3. Find the main game executable (ignore junk)
-    std::string appName;
-    for (const auto& entry : std::filesystem::directory_iterator(targetDir)) {
-        if (!entry.is_regular_file())
-            continue;
-
-        auto path = entry.path();
-        if (path.extension() != ".exe")
-            continue;
-
-        std::string filename = path.filename().string();
-        if (!isIgnoredExe(filename)) {
-            appName = path.stem().string();
+    std::string exeName;
+    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+        if (!entry.is_regular_file()) continue;
+        if (entry.path().extension() != ".exe") continue;
+        auto name = entry.path().filename().string();
+        if (isIgnored(name)) continue;
+        if (matchesParadoxGame(name)) {
+            exeName = entry.path().stem().string();
             break;
         }
     }
 
-    if (appName.empty()) {
-        std::cerr << "No valid game executable found.\n";
+    if (exeName.empty()) {
+        std::cerr << "No matching executable found\n";
         return 1;
     }
 
-    // 4. Create Launcher.bat
-    std::filesystem::path launcherPath = targetDir / "Launcher.bat";
-    std::ofstream out(launcherPath);
+    std::ofstream out(dir / "Launcher.bat");
     if (!out.is_open()) {
-        std::cerr << "Failed to create Launcher.bat.\n";
+        std::cerr << "Failed to create Launcher.bat\n";
         return 1;
     }
-
     out << "@echo off\n";
-    out << "echo Starting " << appName << " without Paradox launcher...\n";
-    out << "\"" << appName << ".exe\" %command%\n";
-    out.close();
+    out << "echo Starting " << exeName << " without Paradox launcher...\n";
+    out << '\"' << exeName << ".exe\" %command%\n";
 
-    std::cout << "\n[OK] Created Launcher.bat in " << targetDir << "\n";
-    std::cout << "It runs: " << appName << ".exe %command%\n";
-    std::cout << "\nDowser preserved, launcher-free gaming achieved.\n";
-
+    std::cout << "Launcher.bat created for " << exeName << "\n";
     return 0;
 }
