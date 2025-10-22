@@ -118,5 +118,3 @@ If this tool helped you, consider giving the repository a ⭐ on GitHub.
 Your feedback and contributions are welcome.
 
 ---
-
-Would you like me to generate a **banner image** (for the top of the README) that matches this aesthetic — dark background, C++ logo, and the text “Paradox Launcher Remover” in clean white type?
